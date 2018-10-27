@@ -89,27 +89,41 @@ def path_process(filePath):
     return
 
 
-def save_file(url, flag="file"):
-    urlComponent = parse_url(url)
-    if flag == 'html':
-        filePath = './pages/' + urlComponent['query']
-    else:
-        filePath = './pages/' + urlComponent['path']
-    content = save(url, filePath)
-    if flag == 'html':
-        return content.decode('utf-8')
-    return
-
-
-def save(url, filePath):
-    if os._exists(filePath):
-        return b''
-    path_process(filePath)
-    content = get_remote_content(url)
-    file = open(filePath, 'wb')
-    file.write(content)
-    file.close()
-    return content
+def save_file(url, filePath=""):
+    try:
+        body = get_remote_content(url)
+        urlComponent = parse_url(url)
+        if filePath != "":
+            file = open(filePath, 'wb')
+            file.write(body)
+            file.close()
+            return ""
+        elif urlComponent['path'] != '':
+            filePath = './pages/' + urlComponent['path']
+            file = open(filePath, 'wb')
+            file.write(body)
+            file.close()
+        elif urlComponent['query'] != '':
+            filePath = './pages/' + urlComponent['query']
+            try:
+                content = body.decode('utf-8')
+                file = open(filePath, 'w')
+                file.write(content)
+                file.close()
+                return content
+            except UnicodeDecodeError:
+                return content.decode('big5')
+                file = open(filePath, 'w')
+                file.write(content)
+                file.close()
+                return content
+            else:
+                file = open(filePath, 'wb')
+                file.write(body)
+                file.close()
+                return ""
+    except RuntimeError:
+        return ""
 
 
 def get_remote_content(url):
@@ -138,13 +152,8 @@ def html_process(url):
     :return:
     """
     urlComponent = parse_url(url);
-    filePath = './pages/' + urlComponent['query']
-    if os.path.exists(filePath):
-        return
-    content = get_content(url)
-    file = open(filePath, 'w')
-    file.write(content)
-    file.close()
+
+    content = save_file(url)
 
     imgs_process(content)
     scripts_process(content)
@@ -545,7 +554,7 @@ def download_process(content):
         return
     includeFileString = includeFilesMatch[0]
 
-    categoryPattern = re.compile('\&lt;a\w*href="\?M=hd.*?"\&gt;(.*?)&lt;', re.IGNORECASE)
+    categoryPattern = re.compile('\&lt;a\W*href="\?M=hd.*?"\&gt;(.*?)&lt;', re.IGNORECASE)
     categoryMatch = categoryPattern.findall(includeFileString)
     category = re.sub(' .*', '', categoryMatch[0])
 
@@ -579,7 +588,7 @@ def download_process(content):
             downloadFileName = downloadInfoMatch.group(2) + '.' + downloadInfoMatch.group(1).lower()
             downloadLink = 'http://haodoo.net/?M=d&P=' + downloadFileName
             downloadFilePath = filePath + '/' + downloadFileName
-            save(downloadLink, downloadFilePath)
+            save_file(downloadLink, downloadFilePath)
         continue
     return
 
