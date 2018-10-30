@@ -25,6 +25,7 @@ def process(url, type=''):
         html_process(url, url_component)
     return
 
+
 def readonline_process(url, url_component):
     """
     处理在线阅读的保存和解析
@@ -288,8 +289,9 @@ def downloads_process(content):
 
     title_pattern = re.compile('SetTitle\("(.*?)"\)', re.I)
     title_match = title_pattern.findall(include_file_string)
-    title = title_match[0]
-    book_path += '/' + title
+    if title_match:
+        title = title_match[0]
+        book_path += '/' + title
     file_list = re.split('<font color="CC0000">', include_file_string, flags=re.DOTALL)
     for i in range(1, len(file_list)):
         file_string = file_list[i]
@@ -365,6 +367,7 @@ def parse_body(body):
     :param body:
     :return:
     """
+    content = ''
     try:
         content = body.decode('utf-8')
     except UnicodeDecodeError:
